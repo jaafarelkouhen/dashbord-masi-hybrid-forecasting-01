@@ -31,3 +31,8 @@ logs/
 frontend/node_modules/
 frontend/.next/
 frontend/out/
+# Claude / AI assistant local files
+.claude/
+claude/
+CLAUDE.md
+
