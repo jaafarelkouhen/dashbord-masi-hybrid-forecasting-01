@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "masi-dashboard"
+version = "0.1.0"
+description = "Dashboard + RAG pour MASI Hybrid Forecasting (HMM + CNN-LSTM)"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "MASI Hybrid Forecasting" }]
+license = { text = "Proprietary" }
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+exclude = ["frontend*", "scripts*", "tests*"]

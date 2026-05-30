@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <title>MASI Hybrid Forecasting — Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/css/app.css" />
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
+  </head>
+
+  <body>
+    <!-- App shell -->
+    <div class="app">
+      <!-- Sidebar -->
+      <aside class="sidebar" aria-label="Navigation principale">
+        <a class="brand" href="#/forecast">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span class="brand-text">
+            <small>MASI desk</small>
+            <strong>Hybrid Forecasting</strong>
+          </span>
+        </a>
+
+        <nav class="nav" aria-label="Sections">
+          <a class="nav-item" data-route="forecast" href="#/forecast">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="nav-copy"><strong>Forecast</strong><small>Signal J+1</small></span>
+          </a>
+          <a class="nav-item" data-route="horizon" href="#/horizon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12c4-7 14-7 18 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M3 18c4-4 14-4 18 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.55"/><circle cx="12" cy="6" r="1.4" fill="currentColor"/></svg>
+            <span class="nav-copy"><strong>Horizon</strong><small>Mai – Juin 2026</small></span>
+          </a>
+          <a class="nav-item" data-route="risk" href="#/risk">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 16H3z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+            <span class="nav-copy"><strong>Risk</strong><small>VaR / ES</small></span>
+          </a>
+          <a class="nav-item" data-route="backtest" href="#/backtest">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M7 14l3-3 3 3 4-5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="nav-copy"><strong>Backtest</strong><small>7 stratégies</small></span>
+          </a>
+          <a class="nav-item" data-route="chat" href="#/chat">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 1 1-3.1-6.3L21 5l-1 4-1 .1" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="nav-copy"><strong>Assistant</strong><small>RAG métier</small></span>
+          </a>
+        </nav>
+
+        <div class="sidebar-foot">
+          <div class="model-card" aria-label="Modèle actif">
+            <span>Stack actif</span>
+            <strong>CNN-LSTM + HMM</strong>
+            <em>Walk-forward clean</em>
+          </div>
+          <button class="theme-toggle" id="themeToggle" type="button" aria-label="Changer de thème">
+            <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="api-pill" id="apiPill">
+            <span class="api-pill-dot" aria-hidden="true"></span>
+            <span class="api-pill-text">connecting…</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <div class="market-strip" aria-label="Contexte marché">
+          <div class="strip-title">
+            <span class="live-dot" aria-hidden="true"></span>
+            <strong>MASI control desk</strong>
+            <span>beta</span>
+          </div>
+          <div class="strip-items">
+            <span>Horizon J+1</span>
+            <span>HMM-gate</span>
+            <span>EGARCH risk layer</span>
+            <span>Anti-leakage</span>
+          </div>
+        </div>
+
+        <!-- ============================== FORECAST ============================== -->
+        <section class="view" data-view="forecast" data-active>
+          <header class="view-head">
+            <div>
+              <p class="eyebrow">Stratégie production · HMM-gate · DSR ≈ 0.997</p>
+              <h1>Prévision MASI</h1>
+              <p class="muted" id="forecastMeta">Chargement…</p>
+            </div>
+            <button class="btn" id="refreshBtn" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Rafraîchir
+            </button>
+          </header>
+
+          <div class="kpi-grid" data-stagger>
+            <article class="kpi kpi-signal"><p>Rendement prédit</p><strong id="kpiReturn">—</strong><span class="kpi-foot" id="kpiReturnSub">J+1, modèle CNN-LSTM</span></article>
+            <article class="kpi kpi-risk"><p>VaR 5% (1j)</p><strong id="kpiVar">—</strong><span class="kpi-foot">Paramétrique, EGARCH</span></article>
+            <article class="kpi kpi-risk"><p>ES 5%</p><strong id="kpiEs">—</strong><span class="kpi-foot">Expected Shortfall</span></article>
+            <article class="kpi kpi-regime"><p>Régime HMM</p><strong id="kpiRegime">—</strong><span class="kpi-foot" id="kpiRegimeSub">Streak —</span></article>
+            <article class="kpi kpi-score"><p>Risk score</p><strong id="kpiScore">—</strong><span class="kpi-foot">/100, J du jour</span></article>
+            <article class="kpi kpi-equity"><p>Equity finale</p><strong id="kpiEquity">—</strong><span class="kpi-foot" id="kpiEquitySub">Cumul TEST</span></article>
+          </div>
+
+          <section class="panel panel-primary">
+            <header class="panel-head">
+              <h2>Equity vs Buy & Hold</h2>
+              <div class="chip-row" role="tablist" aria-label="Période">
+                <button class="chip is-active" data-window="252" role="tab" type="button">1A</button>
+                <button class="chip" data-window="500" role="tab" type="button">2A</button>
+                <button class="chip" data-window="0" role="tab" type="button">Tout</button>
+              </div>
+            </header>
+            <div class="chart" id="chartEquity"></div>
+          </section>
+
+          <div class="grid-2">
+            <section class="panel">
+              <header class="panel-head"><h2>Distribution des régimes</h2></header>
+              <div class="chart chart-sm" id="chartRegimes"></div>
+            </section>
+            <section class="panel">
+              <header class="panel-head"><h2>Persistance régime · prochaine transition</h2></header>
+              <div class="persistence" id="persistenceTable"></div>
+            </section>
+          </div>
+        </section>
+
+        <!-- ============================== HORIZON ============================== -->
+        <section class="view" data-view="horizon">
+          <header class="view-head">
+            <div>
+              <p class="eyebrow">Projection hors-échantillon · étape 10</p>
+              <h1>Horizon Mai–Juin 2026</h1>
+              <p class="muted" id="horizonMeta">Chargement…</p>
+            </div>
+            <div class="chip-row" role="tablist" aria-label="Mois affiché">
+              <button class="chip is-active" data-horizon-month="all" role="tab" type="button">Tout</button>
+              <button class="chip" data-horizon-month="2026-05" role="tab" type="button">Mai 26</button>
+              <button class="chip" data-horizon-month="2026-06" role="tab" type="button">Juin 26</button>
+            </div>
+          </header>
+
+          <div class="kpi-grid" data-stagger>
+            <article class="kpi kpi-signal">
+              <p>Close fin horizon</p>
+              <strong id="hkpiClose">—</strong>
+              <span class="kpi-foot" id="hkpiCloseSub">cumul vs dernier observed</span>
+            </article>
+            <article class="kpi kpi-equity">
+              <p>Rendement cumulé</p>
+              <strong id="hkpiReturn">—</strong>
+              <span class="kpi-foot" id="hkpiReturnSub">mai + juin</span>
+            </article>
+            <article class="kpi kpi-regime">
+              <p>Modèle</p>
+              <strong id="hkpiModel">—</strong>
+              <span class="kpi-foot" id="hkpiModelSub">ARIMA · drift HMM</span>
+            </article>
+            <article class="kpi kpi-score">
+              <p>Monte-Carlo</p>
+              <strong id="hkpiMC">—</strong>
+              <span class="kpi-foot" id="hkpiMCSub">trajectoires p10/p50/p90</span>
+            </article>
+            <article class="kpi kpi-risk">
+              <p>Borne p10 fin</p>
+              <strong id="hkpiP10">—</strong>
+              <span class="kpi-foot">scénario baissier (10 %)</span>
+            </article>
+            <article class="kpi kpi-signal">
+              <p>Borne p90 fin</p>
+              <strong id="hkpiP90">—</strong>
+              <span class="kpi-foot">scénario haussier (90 %)</span>
+            </article>
+          </div>
+
+          <section class="panel panel-primary">
+            <header class="panel-head">
+              <h2>Fan chart · MASI projeté + bandes Monte-Carlo</h2>
+              <span class="muted" id="horizonChartMeta"></span>
+            </header>
+            <div class="chart" id="chartHorizon"></div>
+          </section>
+
+          <div class="grid-2">
+            <section class="panel">
+              <header class="panel-head"><h2>Résumé mensuel</h2></header>
+              <div class="persistence" id="horizonMonthly"></div>
+            </section>
+            <section class="panel">
+              <header class="panel-head">
+                <h2>Distribution des signaux</h2>
+                <span class="muted" id="horizonSignalMeta"></span>
+              </header>
+              <div class="chart chart-sm" id="chartHorizonSignals"></div>
+            </section>
+          </div>
+        </section>
+
+        <!-- ============================== RISK ============================== -->
+        <section class="view" data-view="risk">
+          <header class="view-head">
+            <div>
+              <p class="eyebrow">Couche risque · étape 7</p>
+              <h1>Risque</h1>
+              <p class="muted" id="riskMeta">Chargement…</p>
+            </div>
+          </header>
+
+          <div class="kpi-grid" data-stagger>
+            <article class="kpi kpi-risk"><p>VaR 5% (paramétrique)</p><strong id="riskVarParam">—</strong><span class="kpi-foot">Quantile EGARCH</span></article>
+            <article class="kpi kpi-risk"><p>ES 5% (paramétrique)</p><strong id="riskEsParam">—</strong><span class="kpi-foot">Espérance conditionnelle</span></article>
+            <article class="kpi kpi-score"><p>Vol GARCH (J)</p><strong id="riskVol">—</strong><span class="kpi-foot">Annualisée ≈</span></article>
+            <article class="kpi kpi-regime"><p>Breaches observés</p><strong id="riskBreaches">—</strong><span class="kpi-foot" id="riskBreachesSub">vs 5% attendu</span></article>
+          </div>
+
+          <section class="panel panel-primary">
+            <header class="panel-head"><h2>VaR · ES · rendements réalisés</h2></header>
+            <div class="chart" id="chartRisk"></div>
+          </section>
+
+          <section class="panel">
+            <header class="panel-head">
+              <h2>Validation statistique · Kupiec & Christoffersen</h2>
+              <span class="muted" id="riskValidationMeta"></span>
+            </header>
+            <div class="validation-grid" id="riskValidation" data-stagger>
+              <p class="muted">Chargement…</p>
+            </div>
+          </section>
+        </section>
+
+        <!-- ============================== BACKTEST ============================== -->
+        <section class="view" data-view="backtest">
+          <header class="view-head">
+            <div>
+              <p class="eyebrow">7 stratégies · coût 5 bps</p>
+              <h1>Stratégies</h1>
+              <p class="muted">Trié par Sharpe ratio décroissant</p>
+            </div>
+          </header>
+
+          <section class="panel">
+            <header class="panel-head"><h2>Tableau comparatif</h2></header>
+            <div class="table-wrap">
+              <table class="table" id="strategyTable">
+                <thead>
+                  <tr>
+                    <th>Stratégie</th><th>Sharpe</th><th>Sortino</th>
+                    <th>Ann. return</th><th>Max DD</th><th>Final equity</th><th>Trades</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel panel-primary">
+            <header class="panel-head"><h2>Courbes d'équité comparées</h2></header>
+            <div class="chart" id="chartEquityAll"></div>
+          </section>
+        </section>
+
+        <!-- ============================== CHAT ============================== -->
+        <section class="view" data-view="chat">
+          <header class="view-head">
+            <div>
+              <p class="eyebrow">RAG · ChromaDB · sentence-transformers</p>
+              <h1>Assistant quant</h1>
+              <p class="muted" id="chatMeta">Pose une question sur la méthodologie, les métriques live ou les stratégies.</p>
+            </div>
+          </header>
+
+          <section class="chat">
+            <div class="chat-log" id="chatLog" aria-live="polite">
+              <div class="chat-empty">
+                <p>Suggestions :</p>
+                <div class="chip-row chip-row-wrap">
+                  <button class="chip" data-suggest type="button">Quel est le VaR du jour ?</button>
+                  <button class="chip" data-suggest type="button">Explique la méthodologie anti-leakage</button>
+                  <button class="chip" data-suggest type="button">Régime HMM actuel ?</button>
+                  <button class="chip" data-suggest type="button">Meilleure stratégie par Sharpe ?</button>
+                </div>
+              </div>
+            </div>
+            <form class="chat-form" id="chatForm" autocomplete="off">
+              <input
+                class="chat-input"
+                id="chatInput"
+                type="text"
+                placeholder="Pose ta question…"
+                aria-label="Question pour l'assistant"
+                required
+              />
+              <button class="btn btn-primary" type="submit" id="chatSend">
+                <span class="chat-send-label">Envoyer</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </form>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script type="module" src="/assets/js/app.js"></script>
+  </body>
+</html>
