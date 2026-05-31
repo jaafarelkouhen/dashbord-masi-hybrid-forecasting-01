@@ -262,22 +262,50 @@ python -m rag_project.scripts.build_index
 
 ## Lancement
 
-```powershell
-# Terminal 1 : API FastAPI
-.\scripts\run_dev.ps1
-# ou directement :
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+Super simple, **3 étapes** :
 
-# Terminal 2 : UI Next.js
-cd frontend
-npm install
+### 1. Vérifie que les 2 serveurs tournent
+
+Tu dois avoir **2 fenêtres terminaux ouvertes en permanence** :
+
+**Terminal 1 — Backend FastAPI (port 8001)**
+
+```powershell
+cd C:\Users\jelko\OneDrive\Documents\dashbord-masi-hybrid-forecasting-01
+.\.venv\Scripts\Activate.ps1
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
+```
+
+→ Tu dois voir `Application startup complete.`
+
+**Terminal 2 — Frontend Next.js (port 3000)**
+
+```powershell
+cd C:\Users\jelko\OneDrive\Documents\dashbord-masi-hybrid-forecasting-01\frontend
 npm run dev
 ```
 
-Puis ouvre :
+→ Tu dois voir `Ready in XXXms`
 
-- **Dashboard Next.js** : <http://127.0.0.1:3000/>
-- **API docs (OpenAPI)** : <http://127.0.0.1:8000/docs>
+### 2. Vérifie qu'Ollama tourne
+
+Regarde dans ta barre des tâches Windows en bas à droite (à côté de l'horloge).
+Tu dois voir l'**icône Ollama (un lama)**. Si tu ne la vois pas :
+
+- Menu **Démarrer** → tape `Ollama` → clic.
+
+### 3. Ouvre le navigateur
+
+Edge, Chrome, Firefox — ouvre un nouvel onglet et tape dans la barre d'adresse :
+
+```text
+http://localhost:3000/dashboard
+```
+
+Autres URLs utiles :
+
+- **Dashboard Next.js** (racine) : <http://127.0.0.1:3000/>
+- **API docs (OpenAPI)** : <http://127.0.0.1:8001/docs>
 
 ---
 
