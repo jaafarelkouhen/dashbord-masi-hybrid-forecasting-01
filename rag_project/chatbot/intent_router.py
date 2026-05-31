@@ -201,6 +201,48 @@ def _is_short_help(question: str) -> bool:
     return False
 
 
+# --- Override "live" : court-circuite l'embedder pour les questions qui
+# demandent explicitement une valeur courante (« quel est le VaR actuel »,
+# « régime HMM du jour »…). L'embedder confond souvent ces questions avec
+# `definition_query`, ce qui prive le fallback du snapshot live.
+_LIVE_HINT_PATTERN = re.compile(
+    r"\b(actuel(?:le|s|les)?|aujourd\s*hui|du\s+jour|ce\s+jour|"
+    r"courant(?:e|es|s)?|maintenant|en\s+ce\s+moment|live|j\s*1|j\s*\+\s*1)\b"
+)
+_RISK_TERM_PATTERN = re.compile(
+    r"\b(var|es|shortfall|breach(?:es)?|kupiec|christoffersen|garch|"
+    r"volatilit[eé]|vol)\b"
+)
+_REGIME_TERM_PATTERN = re.compile(
+    r"\b(r[eé]gime|hmm|bull|bear|neutral|transition|posterior|streak|switch)\b"
+)
+_FORECAST_TERM_PATTERN = re.compile(
+    r"\b(forecast|pr[eé]vision|pr[eé]diction|rendement|pr[eé]dit|snapshot)\b"
+)
+_STRATEGY_TERM_PATTERN = re.compile(
+    r"\b(sharpe|drawdown|sortino|calmar|strat[eé]gie|backtest|equity|turnover)\b"
+)
+
+
+def _classify_live_override(question: str) -> str | None:
+    """Retourne un intent live si la question combine marqueur temporel +
+    terme métier. Sinon None (on laisse les embeddings décider)."""
+    normalized = _normalize(question)
+    if not _LIVE_HINT_PATTERN.search(normalized):
+        return None
+    # Priorité métier : risque > régime > stratégie > prévision (catch-all).
+    if _RISK_TERM_PATTERN.search(normalized):
+        return "risk_query"
+    if _REGIME_TERM_PATTERN.search(normalized):
+        return "regime_query"
+    if _STRATEGY_TERM_PATTERN.search(normalized):
+        return "strategy_query"
+    if _FORECAST_TERM_PATTERN.search(normalized):
+        return "forecast_query"
+    # Marqueur temporel seul (« snapshot du jour ») → snapshot complet.
+    return "forecast_query"
+
+
 @lru_cache(maxsize=1)
 def _intent_centroids():
     """Calcule un centroide par intent depuis les embeddings d'exemples."""
@@ -296,6 +338,10 @@ def classify(question: str) -> str:
         return "help_request"
     if _is_short_help(question):
         return "help_request"
+    override = _classify_live_override(question)
+    if override is not None:
+        log.debug("Intent override live → %s", override)
+        return override
     try:
         intent = _classify_embeddings(question)
         if intent is not None:

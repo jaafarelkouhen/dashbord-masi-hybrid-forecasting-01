@@ -5,7 +5,8 @@ lecture de CSV. Idempotent (peut être appliqué plusieurs fois sans effet).
 
 Erreurs cibles :
 1. Méta-commentaires (« D'accord, je vais répondre… »).
-2. Bracket placeholders ([…]) → « indisponible ».
+2. Bracket placeholders type [à compléter] → « indisponible » (préserve les
+   marqueurs de citation [1], [2], [doc-3]).
 3. Confusion régime HMM = direction.
 4. MASI = marché algérien (hallucination courante des modèles non spécialisés).
 5. Phrasing « modèle est configuré pour fonctionner dans un régime X » → faux.
@@ -17,6 +18,30 @@ Erreurs cibles :
 from __future__ import annotations
 
 import re
+
+
+_PLACEHOLDER_KEYWORDS = re.compile(
+    r"(compl[eé]ter|remplir|ins[eé]rer|[aà]\s*venir|[aà]\s*d[eé]finir|"
+    r"[aà]\s*pr[eé]ciser|tbd|xxx+|chiffre\s+exact|valeur\s+exacte|"
+    r"\.\.\.|placeholder|fill[\s\-]?in)",
+    re.IGNORECASE,
+)
+_CITATION_LIKE = re.compile(r"^[\w\-:., ]{1,40}$")
+
+
+def _replace_placeholder(match: re.Match) -> str:
+    """Remplace seulement les vrais placeholders LLM, préserve [1] [doc-3]."""
+    inner = match.group(1).strip()
+    if not inner:
+        return match.group(0)
+    if _PLACEHOLDER_KEYWORDS.search(inner):
+        return "indisponible"
+    # Citations courtes (1, 12, doc-3, ref:42, a-b_c) : on garde.
+    if _CITATION_LIKE.match(inner) and not any(c.isspace() for c in inner[1:-1].strip()):
+        return match.group(0)
+    # Long contenu sans mot-clé placeholder : on garde aussi (probablement du
+    # texte légitime comme [voir section X] ou une formule LaTeX).
+    return match.group(0)
 
 
 def repair(answer: str) -> str:
@@ -33,8 +58,8 @@ def repair(answer: str) -> str:
     for pat in meta_patterns:
         out = re.sub(pat, "", out, flags=re.IGNORECASE)
 
-    # 2. Placeholders bracket → indisponible
-    out = re.sub(r"\[[^\]]+\]", "indisponible", out)
+    # 2. Placeholders bracket → indisponible (préserve [1], [doc-3], etc.)
+    out = re.sub(r"\[([^\]]+)\]", _replace_placeholder, out)
     out = out.replace("dans le contexte dynamique", "dans le dashboard")
 
     # 3. Régime HMM confond avec direction
